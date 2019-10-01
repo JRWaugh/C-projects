@@ -62,8 +62,9 @@ int read_number() {
 
 void print_car_file(FILE *fp){
     struct car_info car;
+    printf("%-10s|%-8s|%-7s|%-9s\n", "Make", "Model", "Price", "Emission");
     while(fread(&car, sizeof(struct car_info), 1, fp))
-        printf("%s %s %d %f\n", car.make, car.model, car.price, car.emissions);
+        printf("%-10s|%-8s|%-7d|%-9.2f\n", car.make, car.model, car.price, car.emissions);
 }
 
 int write_car_to_file(struct car_info car, FILE *fp){
