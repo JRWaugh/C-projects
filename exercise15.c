@@ -38,8 +38,8 @@ int main(){
                 printf("Invalid input. Try again.\n");
         } while (data_size <= 0);
 
-        //if(chunks == NULL || chunks[0].data == NULL)
-        if( !( (chunks = malloc((count + 1) * sizeof(struct chunk))) && (chunks[count].data = malloc(data_size)) ) ) {
+        //if(           chunks == NULL                              ||          chunks[0].data == NULL           )
+        if( !((chunks = malloc((count + 1) * sizeof(struct chunk))) && (chunks[count].data = malloc(data_size))) ) {
             printf("Memory error. Terminating program.");
             return 1;
         }
