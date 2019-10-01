@@ -22,8 +22,8 @@ int main() {
                 //Will read one new character and then write new null character
                 fgets(&buffer[strlen(buffer)], 2, stdin);
             } else {
-                printf("Memory error. Terminating program.\n");
-                return 0;
+                printf("Memory error. Printing partial input.\n");
+                break;
             }
         }
         
@@ -37,7 +37,6 @@ int main() {
             } else {
                 printf("Error writing to file.");
             }
-            free(buffer);
         }
                   
     } while (*buffer != '.');
