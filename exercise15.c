@@ -48,10 +48,11 @@ int main(){
         while(chunks[count].size = fread(chunks[count].data, 1, data_size, fp)) {
             chunks[count].capacity = data_size;
             count++;
-            //Assign memory for next chunk
-            if(temp_chunks = realloc(chunks, (count + 1) * sizeof(struct chunk))){
+            
+            // Room is made for the next chunk
+            // if temp_chunks != NULL && temp_chunks[count].data != NULL
+            if( (temp_chunks = realloc(chunks, (count + 1) * sizeof(struct chunk))) && (temp_chunks[count].data = malloc(data_size)) ){
                 chunks = temp_chunks;
-                chunks[count].data = malloc(data_size);
             } else {
                 printf("Out of memory. Terminating program.");
                 return 0;
