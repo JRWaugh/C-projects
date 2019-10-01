@@ -26,8 +26,12 @@ int main() {
     fseek(fp, 0, SEEK_END);
     file_size = ftell(fp);
     rewind(fp);
-    data = malloc(file_size * sizeof(char));
-    fread(data, sizeof(char), file_size, fp);
+    if(data = malloc(file_size * sizeof(char))
+        fread(data, sizeof(char), file_size, fp);
+    else {
+        printf("Error reading file data into memory");
+        return 1;
+    }
     fclose(fp);
  
     printf("File Size: %ld Bytes\n", file_size);
@@ -54,8 +58,8 @@ int main() {
     }
 
     fwrite(data, sizeof(char), offset, fp);
-    data += offset + amount;
-    fwrite(data, sizeof(char), (file_size - offset - amount), fp);
+    fwrite(data + offset + amount, sizeof(char), (file_size - offset - amount), fp);
+    free(data);
     fclose(fp);
 }
 
