@@ -41,7 +41,7 @@ int main(){
         //if(chunks == NULL || chunks[0].data == NULL)
         if( !( (chunks = malloc((count + 1) * sizeof(struct chunk))) && (chunks[count].data = malloc(data_size)) ) ) {
             printf("Memory error. Terminating program.");
-            return 0;
+            return 1;
         }
 
         while(chunks[count].size = fread(chunks[count].data, 1, data_size, fp)) {
@@ -53,8 +53,8 @@ int main(){
             if( (temp_chunks = realloc(chunks, (count + 1) * sizeof(struct chunk))) && (temp_chunks[count].data = malloc(data_size)) ){
                 chunks = temp_chunks;
             } else {
-                printf("Out of memory. Terminating program.");
-                return 0;
+                printf("Memory error. Terminating program.");
+                return 1;
             }
         } 
        
