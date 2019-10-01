@@ -26,7 +26,7 @@ int main() {
     fseek(fp, 0, SEEK_END);
     file_size = ftell(fp);
     rewind(fp);
-    if(data = malloc(file_size * sizeof(char))
+    if( data = malloc(file_size * sizeof(char)) )
         fread(data, sizeof(char), file_size, fp);
     else {
         printf("Error reading file data into memory");
