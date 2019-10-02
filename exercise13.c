@@ -9,7 +9,7 @@ int main() {
     fp = fopen("exercise13.txt", "w");
     if(!fp) {
         printf("Error opening file.");
-        return 0;
+        return 1;
     }
     
     do { 

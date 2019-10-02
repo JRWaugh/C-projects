@@ -21,7 +21,7 @@ int main(){
 
     FILE *fp = fopen(buffer, "r");
     if (fp == NULL)
-        return 0;
+        return 1;
 
     //Read items into struct array until end of file or until array is full
     while(!feof(fp) && count < STOCK_LEN){
