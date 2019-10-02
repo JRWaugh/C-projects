@@ -20,8 +20,10 @@ int main(){
         buffer[strlen(buffer) - 1] = '\0';
 
     FILE *fp = fopen(buffer, "r");
-    if (fp == NULL)
+    if (!fp){
+        printf("Unable to open file.\n")
         return 1;
+    }
 
     //Read items into struct array until end of file or until array is full
     while(!feof(fp) && count < STOCK_LEN){
