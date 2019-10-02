@@ -34,7 +34,6 @@ int main(){
             printf("Error opening file.");
             return 1;
         }
-        fp = fopen("cars.txt", "ab+");
         printf("== Car Database ==\n1. Print all cars\n2. Write car to file\n3. Import cars from file\n4. Quit\n");
         selection = read_number();
         switch (selection) {
@@ -60,6 +59,7 @@ int main(){
                         write_car_to_file(cars[i], fp);
                     printf("%d cars read from database to file\n\n", i);
                     free(cars);
+                    free(car_db.data);
                 }
                 break;
             case 4:
