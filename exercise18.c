@@ -27,14 +27,13 @@ int main(){
     FILE *fp;
     struct file_info car_db;
     int selection;
-
-    if(!fp){
-        printf("Error opening file.");
-        return 1;
-    }
     
     do {
         fp = fopen("cars.txt", "ab+");
+        if(!fp){
+            printf("Error opening file.");
+            return 1;
+        }
         printf("== Car Database ==\n1. Print all cars\n2. Write car to file\n3. Import cars from file\n4. Quit\n");
         selection = read_number();
         switch (selection) {
@@ -49,13 +48,13 @@ int main(){
                 break;
             case 3:
                 if(read_db(&car_db)){
-                    char *token = strtok(car_db.data, "}");
+                    char *token = strtok(car_db.data, "}"); // Chop up the data in {} enclosed chunks
                     while(token != NULL){
                         struct car_info car;
                         char *make, *model, *price, *emissions;
                         int result = 0;
                         if(make = strstr(token, "make"))
-                            result += sscanf(make, "%*[^:]%*2c%[^\"]", car.make); //All this sscanf formatting trouble just to strip the quotes from the strings!
+                            result += sscanf(make, "%*[^:]%*2c%[^\"]", car.make); //All this sscanf formatting trouble just to strip the quotes from the strings
                         if(model = strstr(token, "model"))
                             result += sscanf(model, "%*[^:]%*2c%[^\"]", car.model);
                         if(price = strstr(token, "price"))
@@ -82,7 +81,7 @@ int main(){
                 printf("Invalid input.\n");
                 break;
         }
-        fclose(fp);
+        fclose(fp); // file is closed and reopened on every loop to ensure the changes made will show up in the print_car_file function
     } while (selection != 4);
 
     return 0;
