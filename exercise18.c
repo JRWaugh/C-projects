@@ -55,11 +55,11 @@ int main(){
                 if(read_db(&car_db, filename)){
                     int i;
                     struct car_info *cars = db_to_arr(car_db);
-                    for(i = 0; cars[i].price; i++)
+                    for(i = 0; cars[i].price; i++) 
                         write_car_to_file(cars[i], fp);
                     printf("%d cars read from database to file\n\n", i);
                     free(cars);
-                    free(car_db.data);
+                    free(car_db.data); // No longer need car array or data from imported file so both can be safely freed
                 }
                 break;
             case 4:
@@ -132,7 +132,7 @@ int read_db(struct file_info *file, char *filename){
         fseek(fp, 0, SEEK_END);
         file->fsize = ftell(fp);
         rewind(fp);
-        file->data = malloc((file->fsize + 1) * sizeof(char));
+        file->data = malloc((file->fsize) * sizeof(char));
         fread(file->data, 1, file->fsize, fp);
         fclose(fp);
         return 1;
@@ -144,7 +144,7 @@ int read_db(struct file_info *file, char *filename){
 
 struct car_info *db_to_arr(struct file_info file){
     //Takes data from file_info struct and reads into car_info struct array
-
+    //Length is number of cars read, count is number of iterations while strtok != NULL
     int length = 0, count = 0;
     char *token = strtok(file.data, "}");
     struct car_info *cars = malloc((length + 1) * sizeof(struct car_info)); //Always make room for the terminating struct at least
@@ -174,7 +174,7 @@ struct car_info *db_to_arr(struct file_info file){
 
     if(!cars){
         printf("Memory error.");
-        return 0;
+        return NULL;
     }
     cars[length].price = 0; //Indicates where array ends
     return cars;
