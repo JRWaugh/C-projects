@@ -22,18 +22,21 @@ void print_car_file(FILE *fp);
 int write_car_to_file(struct car_info car, FILE *fp);
 struct car_info create_car();
 int read_db(struct file_info *file);
+int db_to_arr(struct file_info file, struct car_info *cars);
 
 int main(){
     FILE *fp;
     struct file_info car_db;
-    int selection;
-    
+    struct car_info *cars = malloc(sizeof(struct car_info));
+    int selection, result;
+
     do {
         fp = fopen("cars.txt", "ab+");
         if(!fp){
             printf("Error opening file.");
             return 1;
         }
+        fp = fopen("cars.txt", "ab+");
         printf("== Car Database ==\n1. Print all cars\n2. Write car to file\n3. Import cars from file\n4. Quit\n");
         selection = read_number();
         switch (selection) {
@@ -46,30 +49,13 @@ int main(){
                 else
                     printf("Error adding car to file.\n");
                 break;
-            case 3:
+            case 3: 
                 if(read_db(&car_db)){
-                    char *token = strtok(car_db.data, "}"); // Chop up the data in {} enclosed chunks
-                    while(token != NULL){
-                        struct car_info car;
-                        char *make, *model, *price, *emissions;
-                        int result = 0;
-                        if(make = strstr(token, "make"))
-                            result += sscanf(make, "%*[^:]%*2c%[^\"]", car.make); //All this sscanf formatting trouble just to strip the quotes from the strings
-                        if(model = strstr(token, "model"))
-                            result += sscanf(model, "%*[^:]%*2c%[^\"]", car.model);
-                        if(price = strstr(token, "price"))
-                            result += sscanf(price, "%*[^:]:%d", &car.price);
-                        if(emissions = strstr(token, "emissions"))
-                            result += sscanf(emissions, "%*[^:]:%f", &car.emissions);
-
-                        if(result == 4){
-                            write_car_to_file(car, fp);
-                        } else {
-                            printf("Data error. Unable to write car information.\n%s", token);
-                        }
-
-                        token = strtok(NULL, "}");
-                    }
+                    int result = 0;
+                    result = db_to_arr(car_db, cars); //Cars will be checked for NULL in the function
+                    for(int i = 0; i < result; i++)
+                        write_car_to_file(cars[i], fp);
+                    printf("%d cars read from database to file\n\n", result);
                 } else {
                     printf("Could not open file with that name.\n");
                 }
@@ -81,7 +67,7 @@ int main(){
                 printf("Invalid input.\n");
                 break;
         }
-        fclose(fp); // file is closed and reopened on every loop to ensure the changes made will show up in the print_car_file function
+        fclose(fp);
     } while (selection != 4);
 
     return 0;
@@ -151,9 +137,42 @@ int read_db(struct file_info *file){
         fread(file->data, 1, file->fsize, file->fp);
         //file->data[file->fsize] = '\0';
         fclose(file->fp);
-
         return 1;
     } else {
         return 0;
     }
+}
+
+int db_to_arr(struct file_info file, struct car_info *cars){
+    //Takes data string from file struct and reads it into n car_info structs
+    //Function returns the number of car_infos it was successfully able to read
+    int length = 0, count = 0;
+    char *token = strtok(file.data, "}");
+    while(token != NULL){
+        char *make, *model, *price, *emissions;
+        cars = realloc(cars, (length + 1) * sizeof(struct car_info));
+        if(!cars){
+            printf("Memory error.");
+            return 0;
+        }
+        int result = 0;
+        if(make = strstr(token, "make"))
+            result += sscanf(make, "%*[^:]%*2c%[^\"]", cars[length].make); //All this sscanf formatting trouble just to strip the quotes from the strings
+        if(model = strstr(token, "model"))
+            result += sscanf(model, "%*[^:]%*2c%[^\"]", cars[length].model);
+        if(price = strstr(token, "price"))
+            result += sscanf(price, "%*[^:]:%d", &cars[length].price);
+        if(emissions = strstr(token, "emissions"))
+            result += sscanf(emissions, "%*[^:]:%f", &cars[length].emissions);
+
+        if(result == 4){
+            length++;
+        } else {
+            sscanf(token, "%*[^\"]%[^ ]", token); //Strip out ugly characters from token so it can be printed
+            printf("Data error in entry %d of file. Missing car information.\n%s", count, (token));
+        }
+        count++;
+        token = strtok(NULL, "}");
+    }
+    return length;
 }
