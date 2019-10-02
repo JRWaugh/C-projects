@@ -11,8 +11,6 @@ struct car_info {
 };
 
 struct file_info {
-    FILE *fp;
-    char fname[LEN];
     char *data;
     long fsize;
 };
@@ -21,14 +19,14 @@ int read_number();
 void print_car_file(FILE *fp);
 int write_car_to_file(struct car_info car, FILE *fp);
 struct car_info create_car();
-int read_db(struct file_info *file);
-int db_to_arr(struct file_info file, struct car_info *cars);
+int read_db(struct file_info *file, char *filename);
+struct car_info *db_to_arr(struct file_info file);
 
 int main(){
     FILE *fp;
     struct file_info car_db;
-    struct car_info *cars = malloc(sizeof(struct car_info));
     int selection, result;
+    char filename[LEN];
 
     do {
         fp = fopen("cars.txt", "ab+");
@@ -50,14 +48,18 @@ int main(){
                     printf("Error adding car to file.\n");
                 break;
             case 3: 
-                if(read_db(&car_db)){
-                    int result = 0;
-                    result = db_to_arr(car_db, cars); //Cars will be checked for NULL in the function
-                    for(int i = 0; i < result; i++)
+                printf("Enter name of file to import data from: ");
+                fgets(filename, LEN, stdin);
+                if(filename[strlen(filename)-1] == '\n')
+                    filename[strlen(filename)-1] = '\0';
+            
+                if(read_db(&car_db, filename)){
+                    int i;
+                    struct car_info *cars = db_to_arr(car_db);
+                    for(i = 0; cars[i].price; i++)
                         write_car_to_file(cars[i], fp);
-                    printf("%d cars read from database to file\n\n", result);
-                } else {
-                    printf("Could not open file with that name.\n");
+                    printf("%d cars read from database to file\n\n", i);
+                    free(cars);
                 }
                 break;
             case 4:
@@ -97,6 +99,7 @@ int write_car_to_file(struct car_info car, FILE *fp){
 }
 
 struct car_info create_car(){
+    //Asks user for input and returns a car.
     struct car_info car;
     char buffer[LEN];
 
@@ -123,39 +126,36 @@ struct car_info create_car(){
     return car;
 }
 
-int read_db(struct file_info *file){
-    printf("Enter name of file to import data from: ");
-    fgets(file->fname, LEN, stdin);
-    if(file->fname[strlen(file->fname)-1] == '\n')
-        file->fname[strlen(file->fname)-1] = '\0';
-
-    if(file->fp = fopen(file->fname, "r")){
-        fseek(file->fp, 0, SEEK_END);
-        file->fsize = ftell(file->fp);
-        rewind(file->fp);
+int read_db(struct file_info *file, char *filename){
+    FILE *fp = fopen(filename, "r");
+    if(fp){
+        fseek(fp, 0, SEEK_END);
+        file->fsize = ftell(fp);
+        rewind(fp);
         file->data = malloc((file->fsize + 1) * sizeof(char));
-        fread(file->data, 1, file->fsize, file->fp);
-        //file->data[file->fsize] = '\0';
-        fclose(file->fp);
+        fread(file->data, 1, file->fsize, fp);
+        fclose(fp);
         return 1;
     } else {
+        printf("Could not open file with that name.\n");
         return 0;
     }
 }
 
-int db_to_arr(struct file_info file, struct car_info *cars){
-    //Takes data string from file struct and reads it into n car_info structs
-    //Function returns the number of car_infos it was successfully able to read
+struct car_info *db_to_arr(struct file_info file){
+    //Takes data from file_info struct and reads into car_info struct array
+
     int length = 0, count = 0;
     char *token = strtok(file.data, "}");
+    struct car_info *cars = malloc((length + 1) * sizeof(struct car_info)); //Always make room for the terminating struct at least
     while(token != NULL){
         char *make, *model, *price, *emissions;
-        cars = realloc(cars, (length + 1) * sizeof(struct car_info));
+        int result = 0;
         if(!cars){
             printf("Memory error.");
             return 0;
         }
-        int result = 0;
+        
         if(make = strstr(token, "make"))
             result += sscanf(make, "%*[^:]%*2c%[^\"]", cars[length].make); //All this sscanf formatting trouble just to strip the quotes from the strings
         if(model = strstr(token, "model"))
@@ -167,12 +167,14 @@ int db_to_arr(struct file_info file, struct car_info *cars){
 
         if(result == 4){
             length++;
+            cars = realloc(cars, (length + 1) * sizeof(struct car_info));
         } else {
             sscanf(token, "%*[^\"]%[^ ]", token); //Strip out ugly characters from token so it can be printed
-            printf("Data error in entry %d of file. Missing car information.\n%s", count, (token));
+            printf("Data error in entry %d of file. Missing car information.\n%s\n", count, (token));
         }
         count++;
         token = strtok(NULL, "}");
     }
-    return length;
+    cars[length].price = 0; //Indicates where array ends
+    return cars;
 }
