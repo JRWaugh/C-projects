@@ -148,13 +148,9 @@ struct car_info *db_to_arr(struct file_info file){
     int length = 0, count = 0;
     char *token = strtok(file.data, "}");
     struct car_info *cars = malloc((length + 1) * sizeof(struct car_info)); //Always make room for the terminating struct at least
-    while(token != NULL){
+    while(token && cars){
         char *make, *model, *price, *emissions;
         int result = 0;
-        if(!cars){
-            printf("Memory error.");
-            return 0;
-        }
         
         if(make = strstr(token, "make"))
             result += sscanf(make, "%*[^:]%*2c%[^\"]", cars[length].make); //All this sscanf formatting trouble just to strip the quotes from the strings
@@ -174,6 +170,11 @@ struct car_info *db_to_arr(struct file_info file){
         }
         count++;
         token = strtok(NULL, "}");
+    }
+
+    if(!cars){
+        printf("Memory error.");
+        return 0;
     }
     cars[length].price = 0; //Indicates where array ends
     return cars;
