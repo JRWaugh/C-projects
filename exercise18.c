@@ -45,7 +45,7 @@ int main(){
                 if(write_car_to_file(create_car(), fp))
                     printf("Successful\n");
                 else
-                    printf("Error adding car to file.\n");cod
+                    printf("Error adding car to file.\n");
                 break;
             case 3: 
                 printf("Enter name of file to import data from: ");
