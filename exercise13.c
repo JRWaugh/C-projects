@@ -3,8 +3,15 @@
 #include <string.h>
 
 int main() {
-    FILE *fp = fopen("exercise13.txt", "w");
+    FILE *fp;
     char *buffer, *temp_buffer;
+
+    fp = fopen("exercise13.txt", "w");
+    if(!fp) {
+        printf("Error opening file.");
+        return 0;
+    }
+    
     do { 
         int length = 16;
 

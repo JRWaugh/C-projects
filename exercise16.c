@@ -36,20 +36,22 @@ int main() {
  
     printf("File Size: %ld Bytes\n", file_size);
     do {
+        //In this loop, file_size is treated as an array index so 1 is substracted from it
         printf("Enter offset (0 - %ld): ", file_size - 1);
         offset = read_number();
-        if(offset < 0 || offset > file_size)
+        if(offset < 0 || offset > file_size - 1)
             printf("Input out of range.\n");
-    } while(offset < 0 || offset > file_size);
+    } while(offset < 0 || offset > file_size - 1);
 
     do {
+        //In this loop, file_size (and amount) are treated as the number of bytes in the array, so 1 is not subtracted from it
         printf("Enter number of bytes to remove: ");
         amount = read_number();
         if(amount + offset > file_size)
             printf("Sum of starting byte and amount to remove exceeds data.\n");
         else if(amount < 0)
             printf("Error. Enter positive value.\n");
-    } while (amount + offset > file_size || amount < 0);
+    } while ( (amount + offset > file_size) || amount < 0);
     
     fp = fopen(filename, "wb");
     if(!fp){ //just in case this somehow happens

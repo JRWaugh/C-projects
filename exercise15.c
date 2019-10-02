@@ -83,6 +83,8 @@ int main(){
         } while (tolower(selection) != 'y' && tolower(selection) != 'n');
 
     } while (tolower(selection) == 'y');
+
+    printf("Program ended.\n");
 }
 
 uint16_t crc16(const uint8_t* data_p, unsigned int length) {
