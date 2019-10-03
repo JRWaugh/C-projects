@@ -153,9 +153,9 @@ struct car_info *db_to_arr(struct file_info file){
         int result = 0;
         
         if(make = strstr(token, "make"))
-            result += sscanf(make, "%*[^:]%*2c%[^\"]", cars[length].make); //All this sscanf formatting trouble just to strip the quotes from the strings
+            result += sscanf(make, "%*[^:]:\"%[^\"]", cars[length].make); //All this sscanf formatting trouble just to strip the quotes from the strings
         if(model = strstr(token, "model"))
-            result += sscanf(model, "%*[^:]%*2c%[^\"]", cars[length].model);
+            result += sscanf(model, "%*[^:]:\"%[^\"]", cars[length].model);
         if(price = strstr(token, "price"))
             result += sscanf(price, "%*[^:]:%d", &cars[length].price);
         if(emissions = strstr(token, "emissions"))
