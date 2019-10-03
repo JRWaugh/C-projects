@@ -16,7 +16,7 @@ int main () {
     fgets(buffer, LEN, fp);
     sscanf(buffer, "%d", &count);
 
-    while(fgets(buffer, LEN, fp)){
+    while(fgets(buffer, LEN, fp) && read < count){
         //Add to total and increment read if sscanf is successful
         if(sscanf(buffer, "%lf", &num) == 1){
             total += num;

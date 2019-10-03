@@ -5,6 +5,7 @@
 int main() {
     FILE *fp;
     char *buffer, *temp_buffer;
+    int length = 16;
 
     fp = fopen("exercise13.txt", "w");
     if(!fp) {
@@ -12,11 +13,10 @@ int main() {
         return 1;
     }
     
-    do { 
-        int length = 16;
+    buffer = malloc(length * sizeof(char));
 
+    do { 
         //First attempt to read input into buffer array
-        buffer = malloc(length * sizeof(char));
         printf("Enter a string ('.' to end program): ");
         fgets(buffer, length, stdin);
 

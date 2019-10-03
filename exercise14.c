@@ -1,4 +1,4 @@
-#include <stdio.h>
+cod#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -31,14 +31,15 @@ int main(){
             printf("Error reading file. Try again.\n"); 
     } while (!fp);
 
-    while(chunks[length].size = fread(&chunks[length].data, 1, DATA_SIZE, fp)) {
-        //If bytes were read, increment length. If 64 bytes were read, make room for more data
-        if(chunks[length++].size == DATA_SIZE){
-            if(temp_chunks = realloc(chunks, (length + 1) * sizeof(struct chunk)))
-                chunks = temp_chunks;
-            else 
-                printf("Memory error. Printing partial results.");
+    while((chunks[length].size = fread(&chunks[length].data, 1, DATA_SIZE, fp)) == DATA_SIZE) {
+        length++;
+        if(temp_chunks = realloc(chunks, (length + 1) * sizeof(struct chunk)))
+            chunks = temp_chunks;
+        else {
+            printf("Memory error. Printing partial results.");
+            break;
         }
+      
     }
         
     
