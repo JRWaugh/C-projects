@@ -4,64 +4,84 @@
 #include <string.h>
 #include <ctype.h>
 #define LEN 100
+#define NIBBLE 255
 #define ROW_LEN 16
 #define COL_HEADER "          00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F   Press Enter to print next line.\n"
-struct log_t
-{
+#define MENU "1. Enter offset\n2. Edit byte at specified row and column\n3. Undo changes\n4. Print all data\n5. Quit and save changes\n"
+typedef struct {
     char *data;
     char filename[LEN];
-    int size;
-    char n_filename[LEN];
-};
+    unsigned int size;
+    char p_filename[LEN];
+    unsigned int cursor;
+} log_t;
 
 //FILE *open_file(struct log_t log);
-void get_file_info(struct log_t *log, char *filename);
-int print_data_row(int start, char *data, size_t size);
-void edit_data(struct log_t *log, int row, int column, int value);
-int read_number();
-int read_hex_number(const char *prompt_text);
-int menu_selection();
+void get_file_info(FILE *fp, log_t *log);
+void print_data_row(log_t *log);
+void edit_data(log_t *log, unsigned int address, unsigned int value);
+int create_data_edit(log_t *log);
+int read_number(char *mode);
 
-int main(int argc, char **argv)
+int main()
 {
-    struct log_t log;
+    FILE *fp;
+    log_t log;
     int selection = -1, i = 0;
-    char c = '\n';
+    char c;
 
-    if (argc == 1)
-        get_file_info(&log, "\0");
-    else if (argc == 2)
-        get_file_info(&log, argv[1]);
-    else if (argc > 2)
-        printf("Too many args!");
+    do {
+        printf("Enter name of file to read (or type exit to quit): ");
+        fgets(log.filename, LEN, stdin);
+        if (log.filename[strlen(log.filename) - 1] == '\n')
+            log.filename[strlen(log.filename) - 1] = '\0';
+        
+        fp = fopen(log.filename, "rb");
+        if(!fp)
+            printf("Invalid filename.");
+    } while(!fp);
 
-    printf("--HEX EDITOR--\nFilename: \"%s\" / File Size: %d Bytes\n", log.filename, log.size);
-    selection = menu_selection(); 
-    // Menu options:  1. Enter offset, 2. Edit specific byte, 3. Undo changes, 4. Print all data, 5. Quit and save changes
-    switch (selection) {
-        case 1:
-            printf("Enter offset (0x0 - %#x). Input format '02' or '0x02':\n", log.size);
-            int offset = read_hex_number("Offset: ");
-            //Round down offset to a multiple of 16 to find the desired row 
-            offset -= offset % 16;
-            if (offset < 0 || offset > log.size - 1) {
+    get_file_info(fp, &log);
+    fclose(fp);
+    
+    //Print menu and ask user for sleection
+    do {
+        do {
+            printf("--HEX EDITOR--\nFilename: \"%s\" / File Size: %d Bytes\n%s", log.filename, log.size, MENU);
+            //1. Enter offset 2. Edit byte at specified row and column 3. Undo changes 4. Print all data 5. Quit and save changes
+            printf("Selection: ");
+            selection = read_number("%d");
+            if(selection < 1 || selection > 5)
                 printf("Invalid input.\n");
-            } else {
+        } while (selection < 1 || selection > 5);
+
+        switch (selection) {
+            case 1:
+                //Set cursor position
+                do {
+                    printf("Enter offset between 0x0 - %#x (format: '02' or '0x02'): ", log.size - 1);
+                    log.cursor = read_number("%x");
+                    if ( log.cursor < 0  ||  (log.cursor > log.size - 1) )
+                        printf("Invalid input.\n");
+                } while ( log.cursor < 0  ||  (log.cursor > log.size - 1) );
+                log.cursor -= log.cursor % 16; //Round down cursor to a multiple of 16 to find the desired row 
+                
                 printf(COL_HEADER);
-                while (offset < log.size) {
-                    offset= print_data_row(offset, log.data, log.size);
-                    
-                    if (offset< log.size) {
+                while (log.cursor < log.size && c != 'q') {
+                    c = 0;
+                    print_data_row(&log);                 
+                    if (log.cursor < log.size) { // More data to print
                         printf("  --More--  ");
                         c = getchar();
-                        if(c != '\n')
-                            getchar(); //Consume trailing newline character
-                    } else
+                        if(c != '\n') //If input was given, consume everything in the buffer after the first character
+                            while (getchar() != '\n'){}
+                    } else { // No more data to print
                         printf("  EOF\n");
+                    }
                     
                     switch (c) {
                         case 'e': 
-                            printf("Select row and column to edit: ");
+                            create_data_edit(&log);
                             break;
                         case 'q':
                             printf("Quit blah.\n");
@@ -70,117 +90,102 @@ int main(int argc, char **argv)
                             break;
                     }
                 }
-            }
-            break;
-        case 2:
-            printf("Enter byte location (row and column)\n");
-            int row = read_hex_number("Row: ");
-            int column = read_hex_number("Column: ");
-            break;
-    }
+                break;
 
-    edit_data(&log, 3, 5, '2');
+            case 2:
+                //Edit data at specified address
+                create_data_edit(&log);
+                break;
 
+            case 4:
+                //Print all data
+                printf(COL_HEADER);
+                log.cursor = 0;
+                while(log.cursor < log.size){
+                    print_data_row(&log);
+                    printf("\n");
+                }
+            
+            case 5:
+                //Write changes to file and close program
+                fp = fopen(log.filename, "wb");
+                fwrite(log.data, sizeof(char), log.size, fp);
+                fclose(fp);
+
+        }
+    } while (selection != 5);
     return 0;
-
 }
 
-void get_file_info(struct log_t *log, char *filename)
+void get_file_info(FILE *fp, log_t *log)
 {
-    /*  Asks user for filename and attempts to open file. If successful, data from the file will be added to the log struct,
-        as well as the size of the file in bytes.
-    */
-    FILE *fp = fopen(filename, "rb");
-    char buffer[LEN];
-    if (fp)
-    {
-        strcpy(buffer, filename);
-    }
-    else
-    {
-        while (!fp && strcmp(buffer, "quit"))
-        {
-            printf("Enter name of file to read (or type exit to quit): ");
-            fgets(buffer, LEN, stdin);
-            if (buffer[strlen(buffer) - 1] == '\n')
-                buffer[strlen(buffer) - 1] = '\0';
-
-            if (!strcmp(buffer, "quit"))
-                printf("Exiting program.\n");
-            else
-            {
-                fp = fopen(buffer, "rb");
-                if (!fp)
-                {
-                    printf("Filename could not be found.\n");
-                    *filename = '\0';
-                }
-            }
-        }
-    }
-    strcpy(log->filename, buffer);
+    strcpy(log->p_filename, log->filename);
+    strcat(log->p_filename, ".patch");
     fseek(fp, 0, SEEK_END);
     log->size = ftell(fp);
     rewind(fp);
     log->data = malloc(log->size + 1);
     fread(log->data, sizeof(char), log->size, fp);
-    fclose(fp);
+    log->cursor = 0;    
 }
 
-int print_data_row(int start, char *data, size_t size)
-{
-    int i;
-    printf("%08x  ", start);
-    for (i = start; i < (start + ROW_LEN); i++){
-        if(i < size)
-            printf("%02x ", data[i]);
+void print_data_row(log_t *log) {
+    //Prints a row of data and moves cursor to the next row
+    unsigned int i = 0;
+    printf("%08x  ", log->cursor);
+    for (i = log->cursor; i < log->cursor + ROW_LEN; i++) {
+        if(i < log->size)
+            printf("%02x ", log->data[i]);
         else
             printf("%2c ", ' ');
     }
     printf("  ");
-    for (i = start; i < (start + ROW_LEN); i++)
-    {
-        if (!isprint(data[i]) || isspace(data[i]) || i > size)
-            printf("%c", ' ');
+    for (i = log->cursor; i < log->cursor + ROW_LEN; i++) {
+        if (isprint(log->data[i]) && i < log->size)
+            printf("%c", log->data[i]);
         else
-            printf("%c", data[i]);
+            printf("%c", ' ');          
     }
-    return i;
+
+    log->cursor += ROW_LEN;
 }
 
-int menu_selection(){
-    int selection;
-    printf("1. Enter offset\n2. Edit byte at specified row and column\n3. Undo changes\n4. Print all data\n5. Quit and save changes\n");
+void edit_data(log_t *log, unsigned int address, unsigned int value) {
+    log->data[address] = value;
+}
+
+int create_data_edit(log_t *log) {
+    int address = -1, input = -1;
     do {
-        selection = read_number("Input: ");
-        if(selection < 1 || selection > 5)
+        printf("Enter hex address to edit: ");
+        address = read_number("%x");
+        if(address < 0 || address > log->size) 
             printf("Invalid input.\n");
-    } while (selection < 1 || selection > 5);
+    } while (address < 0 || address > log->size);
 
-    return selection;
-    
-}
-void edit_data(struct log_t *log, int row, int column, int value)
-{
-    log->data[row * ROW_LEN + column] = value;
+    do {
+        printf("Enter new value (current: %#x): ", log->data[address]);
+        input = read_number("%x");
+        if(input < 0 || input > NIBBLE)
+            printf("Invalid input.\n");
+    } while (input < 0 || input > NIBBLE);
+
+    FILE *fp = fopen(log->p_filename, "a");
+    if (fp) {
+        fprintf(fp, "%x %x\n", address, input);
+        fclose(fp);
+        edit_data(log, address, input);
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
-int read_number()
+int read_number(char *mode)
 {
     int number = -1;
     char input[LEN];
-    printf("Input: ");
     fgets(input, LEN, stdin);
-    sscanf(input, "%d", &number);
-    return number;
-}
-
-int read_hex_number(const char *prompt_text){
-    int number;
-    char input[LEN];
-    char *ptr;
-    printf("%s", prompt_text);
-    fgets(input, LEN, stdin);
-    sscanf(input, "%x", &number);
+    sscanf(input, mode, &number);
     return number;
 }
