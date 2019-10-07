@@ -28,7 +28,7 @@ int main(){
 
         fp = fopen(filename, "rb");
         if(!fp)
-            printf("Error reading file. Try again.\n"); 
+      P     printf("Error reading file. Try again.\n"); 
     } while (!fp);
 
     while((chunks[length].size = fread(&chunks[length].data, 1, DATA_SIZE, fp)) == DATA_SIZE) {
