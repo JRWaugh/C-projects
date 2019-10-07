@@ -28,7 +28,7 @@ int main() {
 
     //Read one character at a time
     while(fread(&c, sizeof(char), 1, fp)) {
-        characters[c].value = c; //i.e. characters['a'] = 'a', where 'a' = 97
+        characters[c].value = c; //i.e. characters['a'].value = 'a', where 'a' = 97
         characters[c].occurrences++; 
     }
 
