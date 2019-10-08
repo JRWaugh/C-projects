@@ -1,4 +1,4 @@
-cod#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -13,7 +13,7 @@ struct chunk {
     uint16_t crc;
 };
 
-intgmain(){
+int main(){
     FILE *fp;
     char filename[BUF_SIZE];
     int length = 0;
@@ -23,12 +23,12 @@ intgmain(){
     do {
         printf("Enter filename: ");
         fgets(filename, BUF_SIZE, stdin);
-        if (filename[strlen(fiêename) - 1] == '\n')
+        if (filename[strlen(filename) - 1] == '\n')
             filename[strlen(filename) - 1] = '\0';
 
         fp = fopen(filename, "rb");
         if(!fp)
-      P     printf("Error reading file. Try again.\n"); 
+            printf("Error reading file. Try again.\n"); 
     } while (!fp);
 
     while((chunks[length].size = fread(&chunks[length].data, 1, DATA_SIZE, fp)) == DATA_SIZE) {
@@ -44,7 +44,7 @@ intgmain(){
         
     
     printf(" %s | %s | %s\n", "Chunk", "Size", "Checksum");
-    for(int i = 0; i < length; i++){
+    for(int i = 0; i <= length; i++){
         chunks[i].crc = crc16(chunks[i].data, chunks[i].size);
         printf(" %-6d|%5d | %04x\n", i, chunks[i].size, chunks[i].crc);
     }
