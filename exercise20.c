@@ -3,11 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#define PW_LEN 33
+#define PW_LEN 32
+#define WORDCOUNT 10
 
-void generate_passw(char *output, int pw_size, const char **from_words);
+void generate_passw(char *pw_output, int pw_size, const char **secret_words);
 int main(){
-    const char *words[10] = {"Hello", "Surprise", "Bottle", "Bookshelf", "Table", "Magazine", "Paper", "Trees", "Cloth", "Pillar"};
+    const char *words[WORDCOUNT] = {"Hello", "Surprise", "Bottle", "Bookshelf", "Table", "Magazine", "Paper", "Trees", "Cloth", "Pillar"};
     char passwords[3][PW_LEN];
     srand(time(NULL));
 
@@ -17,17 +18,13 @@ int main(){
     }
 }
 
-void generate_passw(char *output, int pw_size, const char **from_words) {
-    int pos, word; 
-    do {
-        pos = rand() % pw_size; // between 0 and 32
-        word = rand() % 10; // between 0 and 9
-    } while ((pos + strlen(from_words[word])) > pw_size);
+void generate_passw(char *pw_output, int pw_size, const char **secret_words) {
+    int word = rand() % WORDCOUNT; // Choose a random word from secret_words
+    int pos = rand() % (pw_size - 1 - strlen(secret_words[word])); // Find a position for the random word   
 
-    for(int i = 0; i < pw_size; i++){
-        //printable characters are in ascii range 33 - 126 inclusive (94 characters)
-        sprintf(&output[i], "%c", (rand() % 94) + 33);
+    for(int i = 0; i < pw_size - 1; i++){
+        pw_output[i] = (rand() % 94) + 33; //printable characters are in ascii range 33 - 126 inclusive (94 characters)
     }
-
-    strncpy(&output[pos], from_words[word], strlen(from_words[word]));
+    pw_output[pw_size - 1] = '\0'; //Password is null terminated
+    strncpy(&pw_output[pos], secret_words[word], strlen(secret_words[word]));
 }
