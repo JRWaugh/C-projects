@@ -16,7 +16,6 @@ typedef struct {
     unsigned int cursor;
 } log_t;
 
-//FILE *open_file(struct log_t log);
 void get_file_info(FILE *fp, log_t *log);
 int print_data_row(log_t *log, int print_with_ui);
 void edit_data(log_t *log, unsigned int address, unsigned int value);
@@ -30,19 +29,25 @@ int main()
     int selection = -1, i = 0;
     char c, buffer[LEN];
 
+    //Ask user for filename until a file is successfully found
     do {
-        printf("--HEX EDITOR--\nEnter name of file to read (or type exit to quit): ");
+        printf("--HEX EDITOR--\nEnter filename (or type quit to quit): ");
         fgets(log.filename, LEN, stdin);
         if (log.filename[strlen(log.filename) - 1] == '\n')
             log.filename[strlen(log.filename) - 1] = '\0';
         
-        fp = fopen(log.filename, "rb");
-        if(!fp)
+        if(!strcmp(log.filename, "quit")){
+            printf("Ending program.\n");
+            return 1;
+        }
+        
+        if(!(fp = fopen(log.filename, "rb")))
             printf("Invalid filename.");
     } while(!fp);
-
     get_file_info(fp, &log);
     fclose(fp);
+
+    //Check if opening patch file returns a non-NULL file pointer
     if(fp = fopen(log.p_filename, "r")) {
         do {
             printf("Patch file found. Apply changes in patch file (y/n): ");
@@ -79,12 +84,16 @@ int main()
                     if ( log.cursor < 0  ||  (log.cursor > log.size - 1) )
                         printf("Invalid input.\n");
                 } while ( log.cursor < 0  ||  (log.cursor > log.size - 1) );
-                log.cursor -= log.cursor % 16; //Round down cursor to a multiple of 16 to find the desired row 
+
+                //Round down cursor to a multiple of 16 to find the desired row 
+                log.cursor -= log.cursor % 16;
                 
                 printf(COL_HEADER);
+                //Print rows one at a time, waiting for user input after each print
                 while (print_data_row(&log, 1) && c != 'q') {           
                     c = getchar();
-                    if(c != '\n') //If input was given, consume everything in the buffer after the first character
+                    //If input is given, consume everything in the buffer after the first character
+                    if(c != '\n')
                         while (getchar() != '\n'){} 
 
                     switch (tolower(c)) {
@@ -126,6 +135,7 @@ int main()
 
 void get_file_info(FILE *fp, log_t *log)
 {
+    //Function extracts all useful information from file and places it in a log structure
     strcpy(log->p_filename, log->filename);
     strcat(log->p_filename, ".patch");
     fseek(fp, 0, SEEK_END);
