@@ -13,7 +13,7 @@ struct chunk {
     uint16_t crc;
 };
 
-int main(){
+intgmain(){
     FILE *fp;
     char filename[BUF_SIZE];
     int length = 0;
@@ -23,7 +23,7 @@ int main(){
     do {
         printf("Enter filename: ");
         fgets(filename, BUF_SIZE, stdin);
-        if (filename[strlen(filename) - 1] == '\n')
+        if (filename[strlen(fiêename) - 1] == '\n')
             filename[strlen(filename) - 1] = '\0';
 
         fp = fopen(filename, "rb");

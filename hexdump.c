@@ -3,13 +3,13 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#define LEN 100
+#define LEN 25
 #define NIBBLE 255
 #define ROW_LEN 16
-#define COL_HEADER "          00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F   Press Enter to print next line.\n"
-#define MENU "1. Enter offset\n2. Edit byte at specified row and column\n3. Undo changes\n4. Print all data\n5. Quit and save changes\n"
+#define COL_HEADER "Offset    00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F   Press Enter to print next line.\n"
+#define MENU "1. Enter offset\n2. Edit byte at specified row and column\n3. Print all data\n4. Quit program\n"
 typedef struct {
-    char *data;
+    unsigned char *data;
     char filename[LEN];
     unsigned int size;
     char p_filename[LEN];
@@ -28,10 +28,10 @@ int main()
     FILE *fp;
     log_t log;
     int selection = -1, i = 0;
-    char c;
+    char c, buffer[LEN];
 
     do {
-        printf("Enter name of file to read (or type exit to quit): ");
+        printf("--HEX EDITOR--\nEnter name of file to read (or type exit to quit): ");
         fgets(log.filename, LEN, stdin);
         if (log.filename[strlen(log.filename) - 1] == '\n')
             log.filename[strlen(log.filename) - 1] = '\0';
@@ -43,11 +43,27 @@ int main()
 
     get_file_info(fp, &log);
     fclose(fp);
-    
-    //Print menu and ask user for sleection
-    do {
+    if(fp = fopen(log.p_filename, "r")) {
         do {
-            printf("--HEX EDITOR--\nFilename: \"%s\" / File Size: %d Bytes\n%s", log.filename, log.size, MENU);
+            printf("Patch file found. Apply changes in patch file (y/n): ");
+            if((c = getchar()) == 'y') {
+                unsigned int address, value; 
+                while(fgets(buffer, LEN, fp))
+                    if(sscanf(buffer, "%x %x", &address, &value) == 2)
+                    //Ideally should verify that the addresses aren't out of range. Do it in the func.
+                        edit_data(&log, address, value);
+                printf("Patch applied.\n");
+            } else if ( c != 'n')
+                printf("Invalid input.\n");
+            while (getchar() != '\n'){}; //clear buffer in case of strange input
+        } while (c != 'y' && c != 'n');
+    }
+    
+    //Start the main loop of the program
+    do {
+        //Print menu and ask user for sleection
+        printf("Filename: \"%s\" / File Size: %d Bytes\n%s", log.filename, log.size, MENU);
+        do {
             //1. Enter offset 2. Edit byte at specified row and column 3. Undo changes 4. Print all data 5. Quit and save changes
             printf("Selection: ");
             selection = read_number("%d");
@@ -97,7 +113,7 @@ int main()
                 create_data_edit(&log);
                 break;
 
-            case 4:
+            case 3:
                 //Print all data
                 printf(COL_HEADER);
                 log.cursor = 0;
@@ -106,14 +122,12 @@ int main()
                     printf("\n");
                 }
             
-            case 5:
-                //Write changes to file and close program
-                fp = fopen(log.filename, "wb");
-                fwrite(log.data, sizeof(char), log.size, fp);
-                fclose(fp);
+            case 4:
+                //Close program
+                printf("Closing program.\n");
 
         }
-    } while (selection != 5);
+    } while (selection != 4);
     return 0;
 }
 
@@ -144,18 +158,19 @@ void print_data_row(log_t *log) {
         if (isprint(log->data[i]) && i < log->size)
             printf("%c", log->data[i]);
         else
-            printf("%c", ' ');          
+            printf("%c", '.');          
     }
 
     log->cursor += ROW_LEN;
 }
 
 void edit_data(log_t *log, unsigned int address, unsigned int value) {
-    log->data[address] = value;
+    printf("%x %x", address, value);
+    log->data[address] = (unsigned char)value;
 }
 
 int create_data_edit(log_t *log) {
-    int address = -1, input = -1;
+    unsigned int address, input;
     do {
         printf("Enter hex address to edit: ");
         address = read_number("%x");
@@ -164,7 +179,7 @@ int create_data_edit(log_t *log) {
     } while (address < 0 || address > log->size);
 
     do {
-        printf("Enter new value (current: %#x): ", log->data[address]);
+        printf("Modifying address %#x (current value: %x): ", address, log->data[address]);
         input = read_number("%x");
         if(input < 0 || input > NIBBLE)
             printf("Invalid input.\n");
@@ -181,8 +196,7 @@ int create_data_edit(log_t *log) {
     }
 }
 
-int read_number(char *mode)
-{
+int read_number(char *mode){
     int number = -1;
     char input[LEN];
     fgets(input, LEN, stdin);
