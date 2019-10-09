@@ -1,6 +1,5 @@
 #include <stdio.h>
 #define LEN 20
-#define DEBUG
 
 #ifdef DEBUG
 #define DEBUGMSG(fmt, ...) printf(fmt, __VA_ARGS__)
