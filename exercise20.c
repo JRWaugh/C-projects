@@ -8,7 +8,7 @@
 
 void generate_passw(char *pw_output, int pw_size, const char **secret_words);
 int main(){
-    const char *words[WORDCOUNT] = {"Hello", "Surprise", "Bottle", "Bookshelf", "Table", "Magazine", "Paper", "Trees", "Cloth", "Pillar"};
+    const char *words[] = {"Hello", "Surprise", "Bottle", "Bookshelf", "Table", "Magazine", "Paper", "Trees", "Cloth", "Pillar", NULL};
     char passwords[3][PW_LEN];
     srand(time(NULL));
 

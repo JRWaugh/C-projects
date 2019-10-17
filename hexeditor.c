@@ -26,9 +26,9 @@ int main()
 {
     FILE *fp;
     log_t log;
-    int selection = -1;
+    int selection = -1, c, trash_ch;
     unsigned int address, value;
-    char c, trash_ch, buffer[LEN];
+    char buffer[LEN];
 
     //Ask user for filename until a file is successfully found
     do {
@@ -55,10 +55,11 @@ int main()
             if( (c = getchar())  ==  'y' ) { 
                 while(fgets(buffer, LEN, fp))
                     if(sscanf(buffer, "%x %x", &address, &value) == 2)
-                        edit_data(&log, address, value); //Ideally should verify that the addresses aren't out of range. Do it in the func.
+                        edit_data(&log, address, value);
                 printf("Patch applied.\n");
             } else if ( c != 'n')
                 printf("Invalid input.\n");
+
             while ( (trash_ch = getchar()) != '\n'  &&  trash_ch != EOF ); //clear buffer in case of strange input
         } while (c != 'y' && c != 'n');
         fclose(fp);
@@ -140,7 +141,7 @@ void get_file_info(FILE *fp, log_t *log)
     fseek(fp, 0, SEEK_END);
     log->size = ftell(fp);
     rewind(fp);
-    log->data = malloc(log->size + 1);
+    log->data = malloc(log->size);
     fread(log->data, sizeof(char), log->size, fp);
     log->cursor = 0;    
 }
@@ -167,37 +168,38 @@ int print_data_row(log_t *log) {
     if(log->cursor < log->size)
         return 1;
     else {
-        printf("  End of data.\n");
+        printf("End of data.\n");
         return 0;  
     }
 }
 
 void edit_data(log_t *log, unsigned int address, unsigned int value) {
-    log->data[address] = (unsigned char)value;
+    if( address >= 0 && address < log->size && value >= 0 && value <= NIBBLE )
+        log->data[address] = (unsigned char)value;
 }
 
 void create_data_edit(log_t *log) {
-    unsigned int address, input;
+    unsigned int address, value;
     FILE *fp;
     do {
         printf("Enter hex address to edit: ");
         address = read_number("%x");
-        if(address < 0 || address > log->size) 
+        if(address < 0 || address > log->size - 1) 
             printf("Invalid input.\n");
-    } while (address < 0 || address > log->size);
+    } while (address < 0 || address > log->size - 1);
 
     do {
-        printf("Modifying address %#x (current value: %x): ", address, log->data[address]);
-        input = read_number("%x");
-        if(input < 0 || input > NIBBLE)
+        printf("Enter new value for hex address %#x (current value: %x): ", address, log->data[address]);
+        value = read_number("%x");
+        if(value < 0 || value > NIBBLE)
             printf("Invalid input.\n");
-    } while (input < 0 || input > NIBBLE);
+    } while (value < 0 || value > NIBBLE);
 
      
     if (fp = fopen(log->p_filename, "a")) {
-        fprintf(fp, "%x %x\n", address, input);
+        fprintf(fp, "%x %x\n", address, value);
         fclose(fp);
-        edit_data(log, address, input);
+        edit_data(log, address, value);
         printf("Changes written to patch file '%s'.\n", log->p_filename);
     } else {
         printf("Error writing changes to patch file.\n");
